@@ -29,49 +29,54 @@ Series Watcher is a Python application that simulates a streaming service by all
    ```bash
    git clone https://github.com/ShendoxParadox/series_playback_player.git
    cd series-watcher
-Create and activate a virtual environment (optional but recommended):
-python3 -m venv venv
-source venv/bin/activate
+
+2. **Create and activate a virtual environment (optional but recommended)**:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
 
 
-Install the dependencies:
-pip install python-vlc pillow
+3. **Install the dependencies**:
+   ```bash
+   pip install python-vlc pillow
 
-**Usage**
-Run the application:
-python watch_series.py
+## Usage
+**Run the application**:
+   ```bash
+   python watch_series.py
+   ```
 
-Browse for your series folder:
+**Browse for your series folder**:
 Click on the Browse button and select the root folder of your series.
 
-Control Playback:
+**Control Playback**:
 Use the buttons to play, pause, fast forward, rewind, and navigate between episodes.
 
-Set Skip Time:
+**Set Skip Time**:
 Enter the skip time in seconds and click on Set Skip Time.
 
-Select Subtitles:
+**Select Subtitles**:
 If available, select subtitles from the dropdown.
 
-Delete Last Position:
+**Delete Last Position**:
 Use the Delete Last Position button to reset the saved state.
 
-Screenshots
+**Screenshots**
 Main Screen with Playback Controls
 
 Subtitle Selection Dropdown
 
-Contributing
+**Contributing**
 Contributions are welcome! Please fork the repository and submit a pull request.
 
-License
+**License**
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-Acknowledgements
+**Acknowledgements**
 VLC Python Bindings
 Pillow
 Contact
 For any questions or suggestions, feel free to reach out to the repo owner.
 
-Happy Watching!
+**Happy Watching!**
 
