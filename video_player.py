@@ -19,6 +19,8 @@ SUBTITLE_UPDATE_RETRY_COUNT = 5  # Number of times to retry fetching subtitles
 
 # Regular expression for episode detection
 EPISODE_REGEX = re.compile(r'[eE](\d{2})')
+THEME = 'clam'
+# ('clam', 'alt', 'default', 'classic')
 
 
 def get_and_rename_series_structure(base_path):
@@ -250,6 +252,9 @@ class VideoPlayerApp:
         self.player.root = root  # Pass Tkinter root to the player for scheduling
         self.player.set_update_callback(self.update_playback_bar)  # Set callback to update label and progress bar
 
+        self.style = ttk.Style()
+        self.style.theme_use(THEME)  # Apply the theme globally
+
         last_position = load_last_position()[series_index]
         if last_position:
             last_season, last_episode, last_time, last_base_path = last_position['season'], last_position['episode'], last_position['time'], last_position['root_path']
@@ -412,6 +417,7 @@ class HomePage:
 
     def setup_ui(self):
         self.style = ttk.Style()
+        self.style.theme_use(THEME)  # Apply the theme globally
         self.style.configure("TLabel", padding=6, font=("Helvetica", 14))
         self.style.configure("TButton", padding=6, font=("Helvetica", 12))
 
