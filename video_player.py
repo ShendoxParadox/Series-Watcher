@@ -3,9 +3,7 @@ import re
 import json
 import vlc
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import messagebox, ttk, filedialog
 from urllib.parse import quote
 from PIL import Image, ImageTk
 
@@ -22,7 +20,7 @@ SUBTITLE_UPDATE_RETRY_COUNT = 5  # Number of times to retry fetching subtitles
 # Regular expression for episode detection
 EPISODE_REGEX = re.compile(r'[eE](\d{2})')
 
-# Function to read and rename episodes in the folder structure
+
 def get_and_rename_series_structure(base_path):
     series_structure = {}
     for season in sorted(os.listdir(base_path)):
@@ -34,7 +32,7 @@ def get_and_rename_series_structure(base_path):
             for episode in episodes:
                 match = EPISODE_REGEX.search(episode)
                 if match:
-                    new_episode_name = f"e{episode_count:02d}"  # Remove the extension from the name
+                    new_episode_name = f"e{episode_count:02d}"  # Remove the extension
                     new_episode_path = os.path.join(season_path, new_episode_name)
                     old_episode_path = os.path.join(season_path, episode)
                     os.rename(old_episode_path, new_episode_path)
@@ -45,22 +43,28 @@ def get_and_rename_series_structure(base_path):
             series_structure[season] = renamed_episodes
     return series_structure
 
-# Functions to save and load last position
-def save_last_position(season, episode, time, root_path):
+
+
+def save_last_position(series_index, season, episode, time, root_path):
+    data = load_json()
+    data[series_index] = {'season': season, 'episode': episode, 'time': time, 'root_path': root_path}
     with open(LAST_POSITION_FILE, 'w') as f:
-        json.dump({'season': season, 'episode': episode, 'time': time, 'root_path': root_path}, f)
+        json.dump(data, f)
 
 def load_last_position():
     try:
         with open(LAST_POSITION_FILE, 'r') as f:
-            position = json.load(f)
-            return position['season'], position['episode'], position['time'], position['root_path']
+            data = json.load(f)
+        return data
     except FileNotFoundError:
-        return 's01', 'e01', 0, None
+        return [{}, {}, {}]  # Default to three empty series
+
+
 
 def reset_last_position():
     with open(LAST_POSITION_FILE, 'w') as f:
-        json.dump({}, f)
+        json.dump([{}, {}, {}], f)
+
 
 def delete_last_position():
     if os.path.exists(LAST_POSITION_FILE):
@@ -69,6 +73,7 @@ def delete_last_position():
     else:
         messagebox.showinfo("File Not Found", "last_position.json does not exist.")
 
+
 def find_image_file(base_path):
     for ext in IMAGE_FILE_EXTENSIONS:
         img_path = os.path.join(base_path, f'img.{ext}')
@@ -76,9 +81,19 @@ def find_image_file(base_path):
             return img_path
     return None
 
-# Video player class
+
+def load_json():
+    try:
+        with open(LAST_POSITION_FILE, 'r') as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        return [{}, {}, {}]
+
+
 class VideoPlayer:
-    def __init__(self):
+    def __init__(self, series_index):
+        self.series_index = series_index
         self.player = vlc.MediaPlayer()
         self.current_season = 's01'
         self.current_episode = 'e01'
@@ -101,12 +116,11 @@ class VideoPlayer:
 
     def play_episode(self, season, episode, time=0):
         path = os.path.join(self.base_path, season, episode)
-        # Encode the path to handle spaces and special characters
         media = vlc.Media(f'file://{quote(path)}')
         self.player.set_media(media)
         self.player.play()
         self.player.set_time(int(time * 1000))  # Set the playback time in milliseconds
-        save_last_position(season, episode, time, self.base_path)
+        save_last_position(self.series_index, season, episode, time, self.base_path)
         self.schedule_check()
         self.schedule_save_position()
         self.update_playback_bar()
@@ -196,7 +210,7 @@ class VideoPlayer:
 
     def save_position(self):
         self.current_time = self.player.get_time() / 1000  # Convert to seconds
-        save_last_position(self.current_season, self.current_episode, self.current_time, self.base_path)
+        save_last_position(self.series_index, self.current_season, self.current_episode, self.current_time, self.base_path)
 
     def update_playback_bar(self):
         if self.root and self.update_callback:
@@ -226,29 +240,32 @@ class VideoPlayer:
             self.subtitle_retry_count += 1
             self.schedule_subtitle_update()
 
-# Tkinter app class
+
 class VideoPlayerApp:
-    def __init__(self, root):
+    def __init__(self, root, series_index):
         self.root = root
-        self.root.title("Video Player")
-        self.player = VideoPlayer()
+        self.series_index = series_index
+        self.root.title(f"Video Player - Series {series_index + 1}")
+        self.player = VideoPlayer(series_index)
         self.player.root = root  # Pass Tkinter root to the player for scheduling
         self.player.set_update_callback(self.update_playback_bar)  # Set callback to update label and progress bar
 
-        last_season, last_episode, last_time, last_base_path = load_last_position()
-        if last_base_path:
-            self.player.set_base_path(last_base_path)
-            self.series_structure = get_and_rename_series_structure(last_base_path)
-            self.player.set_series_structure(self.series_structure)
-        self.player.current_season = last_season
-        self.player.current_episode = last_episode
-        self.player.current_time = last_time
+        last_position = load_last_position()[series_index]
+        if last_position:
+            last_season, last_episode, last_time, last_base_path = last_position['season'], last_position['episode'], last_position['time'], last_position['root_path']
+            if last_base_path:
+                self.player.set_base_path(last_base_path)
+                self.series_structure = get_and_rename_series_structure(last_base_path)
+                self.player.set_series_structure(self.series_structure)
+            self.player.current_season = last_season
+            self.player.current_episode = last_episode
+            self.player.current_time = last_time
 
         self.style = ttk.Style()
         self.style.configure("TLabel", padding=6, font=("Helvetica", 12))
         self.style.configure("TButton", padding=6, font=("Helvetica", 12))
 
-        self.label = ttk.Label(root, text=f"Current Episode: {last_season} {last_episode}")
+        self.label = ttk.Label(root, text=f"Current Episode: {self.player.current_season} {self.player.current_episode}")
         self.label.pack(pady=(10, 0))
 
         self.progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
@@ -349,15 +366,22 @@ class VideoPlayerApp:
                 self.image_label.config(image=photo)
                 self.image_label.image = photo  # Keep a reference to avoid garbage collection
 
+
     def browse_folder(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            reset_last_position()  # Reset the JSON file
+            # Update only the current series info
+            data = load_last_position()
+            data[self.series_index] = {'season': 's01', 'episode': 'e01', 'time': 0, 'root_path': folder_selected}
+            with open(LAST_POSITION_FILE, 'w') as f:
+                json.dump(data, f)
+            
             self.player.set_base_path(folder_selected)
             self.series_structure = get_and_rename_series_structure(folder_selected)
             self.player.set_series_structure(self.series_structure)
             self.load_image()
             self.update_label()
+
 
     def update_subtitle_combobox(self):
         subtitles = self.player.get_subtitle_tracks()
@@ -376,8 +400,56 @@ class VideoPlayerApp:
     def delete_last_position(self):
         delete_last_position()
 
-# Main application entry point
+
+class HomePage:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Series Watcher")
+        self.series_data = load_last_position()
+        self.frames = []
+        self.images = []
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.style = ttk.Style()
+        self.style.configure("TLabel", padding=6, font=("Helvetica", 14))
+        self.style.configure("TButton", padding=6, font=("Helvetica", 12))
+
+        ttk.Label(self.root, text="Select a Series to Watch").pack(pady=20)
+
+        self.frame_container = ttk.Frame(self.root)
+        self.frame_container.pack(pady=20)
+
+        for i in range(3):
+            frame = ttk.Frame(self.frame_container)
+            frame.grid(row=0, column=i, padx=10)
+            self.frames.append(frame)
+            self.setup_series_slot(i)
+
+    def setup_series_slot(self, index):
+        series_info = self.series_data[index]
+        image_label = ttk.Label(self.frames[index])
+        image_label.pack()
+
+        if 'root_path' in series_info:
+            img_path = find_image_file(series_info['root_path'])
+            if img_path:
+                image = Image.open(img_path)
+                image.thumbnail(IMAGE_MAX_SIZE, Image.ANTIALIAS)  # Preserve aspect ratio
+                photo = ImageTk.PhotoImage(image)
+                image_label.config(image=photo)
+                image_label.image = photo  # Keep a reference to avoid garbage collection
+
+        ttk.Button(self.frames[index], text=f"Series {index + 1}", command=lambda idx=index: self.open_series(idx)).pack(pady=10)
+
+    def open_series(self, series_index):
+        self.root.destroy()
+        new_root = tk.Tk()
+        VideoPlayerApp(new_root, series_index)
+        new_root.mainloop()
+
+
 if __name__ == '__main__':
     root = tk.Tk()
-    app = VideoPlayerApp(root)
+    HomePage(root)
     root.mainloop()
