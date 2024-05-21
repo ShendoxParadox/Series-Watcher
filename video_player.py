@@ -254,6 +254,19 @@ class VideoPlayerApp:
 
         self.style = ttk.Style()
         self.style.theme_use(THEME)  # Apply the theme globally
+        # Set global background color
+        self.root.configure(background="#2E2E2E")
+
+        # Configure ttk styles to match the background color
+        self.style.configure("TLabel", background="#2E2E2E", foreground="white")
+        self.style.configure("TFrame", background="#2E2E2E")
+        # self.style.configure("TButton", background="#4CAF50", foreground="white")
+        self.style.map("TButton",
+                       background=[("active", "#45a049")],
+                       foreground=[("active", "white")])
+        
+        self.style.configure("TProgressbar", troughcolor="#3E3E3E", background="#4CAF50")
+
 
         last_position = load_last_position()[series_index]
         if last_position:
@@ -418,8 +431,19 @@ class HomePage:
     def setup_ui(self):
         self.style = ttk.Style()
         self.style.theme_use(THEME)  # Apply the theme globally
+        self.root.configure(background="#2E2E2E")
         self.style.configure("TLabel", padding=6, font=("Helvetica", 14))
         self.style.configure("TButton", padding=6, font=("Helvetica", 12))
+
+        self.style.configure("TLabel", background="#2E2E2E", foreground="white")
+        self.style.configure("TFrame", background="#2E2E2E")
+        # self.style.configure("TButton", background="#4CAF50", foreground="white")
+        self.style.map("TButton",
+                       background=[("active", "#45a049")],
+                       foreground=[("active", "white")])
+        
+        # self.style.configure("TProgressbar", troughcolor="#3E3E3E", background="#4CAF50")
+
 
         ttk.Label(self.root, text="Select a Series to Watch").pack(pady=20)
 
