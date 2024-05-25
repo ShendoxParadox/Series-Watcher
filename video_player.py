@@ -9,9 +9,9 @@ from PIL import Image, ImageTk
 
 # Constants
 LAST_POSITION_FILE = 'last_position.json'
-CHECK_INTERVAL = 500  # Interval to check the video time (in milliseconds)
+CHECK_INTERVAL = 250  # Interval to check the video time (in milliseconds)
 SAVE_INTERVAL = 5000  # Interval to save the video position (in milliseconds)
-THRESHOLD = 1  # Threshold in seconds to trigger the next episode
+THRESHOLD = 1.5  # Threshold in seconds to trigger the next episode
 IMAGE_FILE_EXTENSIONS = ['png', 'jpg', 'jpeg']  # Supported image file extensions
 IMAGE_MAX_SIZE = (400, 300)  # Maximum size for the displayed image
 SUBTITLE_UPDATE_RETRY_INTERVAL = 1000  # Interval to retry fetching subtitles (in milliseconds)
